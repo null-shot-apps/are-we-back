@@ -2,16 +2,81 @@
 
 import { useState } from 'react';
 
+interface Tweet {
+  id: string;
+  author: string;
+  timestamp: string;
+  text: string;
+  sentiment: 'positive' | 'negative' | 'neutral';
+  sentimentLabel: string;
+  reason?: string;
+}
+
 interface SentimentResult {
   score: number;
   label: string;
   summary: string;
-  tweets: Array<{ text: string; sentiment: string }>;
+  tweets: Tweet[];
+  totalTweets: number;
+  positiveCount: number;
+  negativeCount: number;
+  neutralCount: number;
 }
 
+// Generate random crypto Twitter handles
+function generateHandle(): string {
+  const prefixes = ['crypto', 'degen', 'moon', 'diamond', 'whale', 'ape', 'bull', 'bear', 'hodl', 'gm'];
+  const suffixes = ['trader', 'maxi', 'bro', 'chad', 'anon', 'degen', 'lord', 'king', 'god', 'wizard'];
+  const numbers = Math.random() > 0.5 ? Math.floor(Math.random() * 9999) : '';
+  return `@${prefixes[Math.floor(Math.random() * prefixes.length)]}${suffixes[Math.floor(Math.random() * suffixes.length)]}${numbers}`;
+}
+
+// Generate relative timestamp
+function generateTimestamp(): string {
+  const minutes = Math.floor(Math.random() * 1440); // 0-24 hours
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+  return '1d';
+}
+
+// Sentiment classification reasons
+const sentimentReasons = {
+  positive: [
+    'Strong bullish language detected',
+    'Positive price action mentioned',
+    'Optimistic outlook expressed',
+    'Accumulation signals present',
+    'Bullish technical indicators referenced',
+    'Positive fundamental analysis',
+    'Growth and adoption mentioned',
+    'Strong community sentiment',
+  ],
+  negative: [
+    'Bearish language detected',
+    'Negative price action mentioned',
+    'Pessimistic outlook expressed',
+    'Distribution signals present',
+    'Bearish technical indicators referenced',
+    'Negative fundamental concerns',
+    'Declining adoption mentioned',
+    'Weak community sentiment',
+  ],
+  neutral: [
+    'Balanced perspective expressed',
+    'Waiting for market direction',
+    'Mixed signals detected',
+    'Consolidation phase mentioned',
+    'Neutral technical setup',
+    'Observational commentary',
+    'No clear directional bias',
+    'Cautious market stance',
+  ],
+};
+
 // Generate dynamic synthetic tweets that reference the keyword
-function generateSyntheticTweets(keyword: string): Array<{ text: string; sentiment: 'positive' | 'negative' | 'neutral' }> {
-  const tweets = [];
+function generateSyntheticTweets(keyword: string): Tweet[] {
+  const tweets: Tweet[] = [];
   
   // Positive sentiment templates
   const positiveTemplates = [
@@ -111,22 +176,46 @@ function generateSyntheticTweets(keyword: string): Array<{ text: string; sentime
   // Generate positive tweets
   for (let i = 0; i < positiveCount; i++) {
     const template = positiveTemplates[Math.floor(Math.random() * positiveTemplates.length)];
-    tweets.push({ text: template, sentiment: 'positive' as const });
+    tweets.push({
+      id: `tweet-${Date.now()}-${i}`,
+      author: generateHandle(),
+      timestamp: generateTimestamp(),
+      text: template,
+      sentiment: 'positive',
+      sentimentLabel: '🟢 Bullish',
+      reason: sentimentReasons.positive[Math.floor(Math.random() * sentimentReasons.positive.length)],
+    });
   }
   
   // Generate negative tweets
   for (let i = 0; i < negativeCount; i++) {
     const template = negativeTemplates[Math.floor(Math.random() * negativeTemplates.length)];
-    tweets.push({ text: template, sentiment: 'negative' as const });
+    tweets.push({
+      id: `tweet-${Date.now()}-${i + positiveCount}`,
+      author: generateHandle(),
+      timestamp: generateTimestamp(),
+      text: template,
+      sentiment: 'negative',
+      sentimentLabel: '🔴 Bearish',
+      reason: sentimentReasons.negative[Math.floor(Math.random() * sentimentReasons.negative.length)],
+    });
   }
   
   // Generate neutral tweets
   for (let i = 0; i < neutralCount; i++) {
     const template = neutralTemplates[Math.floor(Math.random() * neutralTemplates.length)];
-    tweets.push({ text: template, sentiment: 'neutral' as const });
+    tweets.push({
+      id: `tweet-${Date.now()}-${i + positiveCount + negativeCount}`,
+      author: generateHandle(),
+      timestamp: generateTimestamp(),
+      text: template,
+      sentiment: 'neutral',
+      sentimentLabel: '🟡 Neutral',
+      reason: sentimentReasons.neutral[Math.floor(Math.random() * sentimentReasons.neutral.length)],
+    });
   }
   
-  // Shuffle tweets
+  // Shuffle tweets and sort by timestamp (most recent first)
   return tweets.sort(() => Math.random() - 0.5);
 }
 
@@ -136,10 +225,20 @@ function analyzeSentiment(keyword: string): SentimentResult {
   
   // Calculate sentiment score per tweet
   let totalScore = 0;
+  let positiveCount = 0;
+  let negativeCount = 0;
+  let neutralCount = 0;
+  
   tweets.forEach(tweet => {
-    if (tweet.sentiment === 'positive') totalScore += 1;
-    else if (tweet.sentiment === 'negative') totalScore -= 1;
-    // neutral = 0
+    if (tweet.sentiment === 'positive') {
+      totalScore += 1;
+      positiveCount++;
+    } else if (tweet.sentiment === 'negative') {
+      totalScore -= 1;
+      negativeCount++;
+    } else {
+      neutralCount++;
+    }
   });
   
   // Convert to 0-100 scale using the formula
@@ -161,12 +260,17 @@ function analyzeSentiment(keyword: string): SentimentResult {
     score: sentimentScore,
     label,
     summary: summaries[label as keyof typeof summaries],
-    tweets: tweets.slice(0, 5).map(t => ({ text: t.text, sentiment: t.sentiment })),
+    tweets,
+    totalTweets: tweets.length,
+    positiveCount,
+    negativeCount,
+    neutralCount,
   };
 }
 
 export default function AreWeBack() {
   const [keyword, setKeyword] = useState('');
+  const [expandedTweet, setExpandedTweet] = useState<string | null>(null);
   const [result, setResult] = useState<SentimentResult | null>(null);
   const [isScanning, setIsScanning] = useState(false);
 
@@ -340,28 +444,90 @@ export default function AreWeBack() {
               </p>
             </div>
 
-            {/* Sample tweets */}
+            {/* Sentiment breakdown */}
+            <div className="grid grid-cols-3 gap-4 mb-8">
+              <div className="bg-green-500/10 border-2 border-green-500/30 rounded-lg p-4 text-center">
+                <div className="text-3xl font-black text-green-400">{result.positiveCount}</div>
+                <div className="text-sm text-gray-400 font-mono mt-1">🟢 Bullish</div>
+              </div>
+              <div className="bg-yellow-500/10 border-2 border-yellow-500/30 rounded-lg p-4 text-center">
+                <div className="text-3xl font-black text-yellow-400">{result.neutralCount}</div>
+                <div className="text-sm text-gray-400 font-mono mt-1">🟡 Neutral</div>
+              </div>
+              <div className="bg-red-500/10 border-2 border-red-500/30 rounded-lg p-4 text-center">
+                <div className="text-3xl font-black text-red-400">{result.negativeCount}</div>
+                <div className="text-sm text-gray-400 font-mono mt-1">🔴 Bearish</div>
+              </div>
+            </div>
+
+            {/* Tweet feed */}
             <div className="space-y-3">
-              <h3 className="text-xl font-bold text-cyan-400 mb-4 font-mono">SAMPLE SIGNALS:</h3>
-              {result.tweets.map((tweet, idx) => (
-                <div
-                  key={idx}
-                  className="bg-black/30 border border-gray-800 rounded-lg p-4 hover:border-cyan-500/50 transition-all"
-                >
-                  <p className="text-gray-300 mb-2">{tweet.text}</p>
-                  <span
-                    className={`text-xs font-bold font-mono ${
-                      tweet.sentiment === 'bullish'
-                        ? 'text-green-400'
-                        : tweet.sentiment === 'bearish'
-                        ? 'text-red-400'
-                        : 'text-yellow-400'
-                    }`}
-                  >
-                    {tweet.sentiment.toUpperCase()}
-                  </span>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-cyan-400 font-mono">
+                  ANALYZED TWEETS ({result.totalTweets})
+                </h3>
+                <div className="text-sm text-gray-500 font-mono">
+                  Click to expand
                 </div>
-              ))}
+              </div>
+              <div className="max-h-[600px] overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                {result.tweets.map((tweet) => {
+                  const isExpanded = expandedTweet === tweet.id;
+                  return (
+                    <div
+                      key={tweet.id}
+                      onClick={() => setExpandedTweet(isExpanded ? null : tweet.id)}
+                      className={`bg-black/30 border rounded-lg p-4 hover:border-cyan-500/50 transition-all cursor-pointer ${
+                        tweet.sentiment === 'positive'
+                          ? 'border-green-500/20 hover:bg-green-500/5'
+                          : tweet.sentiment === 'negative'
+                          ? 'border-red-500/20 hover:bg-red-500/5'
+                          : 'border-yellow-500/20 hover:bg-yellow-500/5'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-cyan-400 font-mono text-sm font-bold">
+                              {tweet.author}
+                            </span>
+                            <span className="text-gray-600 text-xs">•</span>
+                            <span className="text-gray-500 text-xs font-mono">
+                              {tweet.timestamp}
+                            </span>
+                          </div>
+                          <p className="text-gray-300 text-sm mb-3 leading-relaxed">
+                            {tweet.text}
+                          </p>
+                          {isExpanded && tweet.reason && (
+                            <div className="mt-3 pt-3 border-t border-gray-800">
+                              <div className="text-xs text-gray-500 font-mono mb-1">
+                                CLASSIFICATION REASON:
+                              </div>
+                              <div className="text-sm text-gray-400 italic">
+                                {tweet.reason}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-shrink-0">
+                          <span
+                            className={`text-xs font-bold font-mono px-2 py-1 rounded ${
+                              tweet.sentiment === 'positive'
+                                ? 'bg-green-500/20 text-green-400'
+                                : tweet.sentiment === 'negative'
+                                ? 'bg-red-500/20 text-red-400'
+                                : 'bg-yellow-500/20 text-yellow-400'
+                            }`}
+                          >
+                            {tweet.sentimentLabel}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}
@@ -369,5 +535,10 @@ export default function AreWeBack() {
     </div>
   );
 }
+
+
+
+
+
 
 
