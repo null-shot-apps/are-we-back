@@ -273,6 +273,8 @@ export default function AreWeBack() {
   const [expandedTweet, setExpandedTweet] = useState<string | null>(null);
   const [result, setResult] = useState<SentimentResult | null>(null);
   const [isScanning, setIsScanning] = useState(false);
+  const [sentimentFilter, setSentimentFilter] = useState<'all' | 'positive' | 'negative' | 'neutral'>('all');
+  const [showDebug, setShowDebug] = useState(false);
 
   const handleScan = async () => {
     if (!keyword.trim()) return;
@@ -299,6 +301,32 @@ export default function AreWeBack() {
     if (score <= 30) return '#ff0040';
     return '#ffaa00';
   };
+
+  // Highlight sentiment keywords in tweet text
+  const highlightKeywords = (text: string, sentiment: string) => {
+    const positiveKeywords = ['bullish', 'moon', 'strong', 'buy', 'accumulating', 'diamond', 'hodl', 'breakout', 'thriving', 'revolutionary', 'juicy', 'massive', 'perfect', 'undervalued'];
+    const negativeKeywords = ['bearish', 'dump', 'weak', 'sold', 'cooked', 'dead', 'rekt', 'brutal', 'dying', 'toxic', 'failing', 'flaws', 'trash', 'vaporware', 'terrible', 'overvalued'];
+    const neutralKeywords = ['sideways', 'consolidating', 'uncertain', 'mixed', 'waiting', 'range', 'choppy', 'stable', 'steady', 'average', 'fair'];
+
+    let keywords: string[] = [];
+    if (sentiment === 'positive') keywords = positiveKeywords;
+    else if (sentiment === 'negative') keywords = negativeKeywords;
+    else keywords = neutralKeywords;
+
+    let highlightedText = text;
+    keywords.forEach(kw => {
+      const regex = new RegExp(`\\b(${kw})\\b`, 'gi');
+      highlightedText = highlightedText.replace(regex, '<mark class="sentiment-highlight">$1</mark>');
+    });
+
+    return highlightedText;
+  };
+
+  // Filter tweets based on sentiment
+  const filteredTweets = result?.tweets.filter(tweet => {
+    if (sentimentFilter === 'all') return true;
+    return tweet.sentiment === sentimentFilter;
+  }) || [];
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-black text-white">
@@ -460,18 +488,108 @@ export default function AreWeBack() {
               </div>
             </div>
 
+            {/* Debug mode toggle */}
+            <div className="flex justify-end mb-4">
+              <button
+                onClick={() => setShowDebug(!showDebug)}
+                className="text-xs font-mono text-gray-500 hover:text-cyan-400 transition-colors"
+              >
+                {showDebug ? '[ HIDE DEBUG ]' : '[ SHOW DEBUG ]'}
+              </button>
+            </div>
+
+            {/* Debug panel */}
+            {showDebug && (
+              <div className="bg-black/50 border-2 border-cyan-500/30 rounded-lg p-6 mb-8 font-mono text-sm">
+                <div className="text-cyan-400 font-bold mb-4">DEBUG MODE</div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-gray-500 mb-1">Positive Count:</div>
+                    <div className="text-green-400 font-bold">{result.positiveCount}</div>
+                  </div>
+                  <div>
+                    <div className="text-gray-500 mb-1">Negative Count:</div>
+                    <div className="text-red-400 font-bold">{result.negativeCount}</div>
+                  </div>
+                  <div>
+                    <div className="text-gray-500 mb-1">Neutral Count:</div>
+                    <div className="text-yellow-400 font-bold">{result.neutralCount}</div>
+                  </div>
+                  <div>
+                    <div className="text-gray-500 mb-1">Total Tweets:</div>
+                    <div className="text-white font-bold">{result.totalTweets}</div>
+                  </div>
+                  <div>
+                    <div className="text-gray-500 mb-1">Raw Score Sum:</div>
+                    <div className="text-white font-bold">
+                      {result.positiveCount - result.negativeCount}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-gray-500 mb-1">Normalized Score:</div>
+                    <div className="text-cyan-400 font-bold">{result.score}/100</div>
+                  </div>
+                  <div className="col-span-2">
+                    <div className="text-gray-500 mb-1">Formula:</div>
+                    <div className="text-gray-400 text-xs">
+                      ((sum / total) + 1) × 50 = (({result.positiveCount - result.negativeCount} / {result.totalTweets}) + 1) × 50 = {result.score}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Tweet feed */}
             <div className="space-y-3">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-bold text-cyan-400 font-mono">
-                  ANALYZED TWEETS ({result.totalTweets})
+                  ANALYZED TWEETS ({filteredTweets.length})
                 </h3>
-                <div className="text-sm text-gray-500 font-mono">
-                  Click to expand
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setSentimentFilter('all')}
+                    className={`px-3 py-1 rounded text-xs font-mono transition-all ${
+                      sentimentFilter === 'all'
+                        ? 'bg-cyan-500 text-black'
+                        : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    }`}
+                  >
+                    ALL
+                  </button>
+                  <button
+                    onClick={() => setSentimentFilter('positive')}
+                    className={`px-3 py-1 rounded text-xs font-mono transition-all ${
+                      sentimentFilter === 'positive'
+                        ? 'bg-green-500 text-black'
+                        : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    }`}
+                  >
+                    🟢 BULLISH
+                  </button>
+                  <button
+                    onClick={() => setSentimentFilter('negative')}
+                    className={`px-3 py-1 rounded text-xs font-mono transition-all ${
+                      sentimentFilter === 'negative'
+                        ? 'bg-red-500 text-black'
+                        : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    }`}
+                  >
+                    🔴 BEARISH
+                  </button>
+                  <button
+                    onClick={() => setSentimentFilter('neutral')}
+                    className={`px-3 py-1 rounded text-xs font-mono transition-all ${
+                      sentimentFilter === 'neutral'
+                        ? 'bg-yellow-500 text-black'
+                        : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    }`}
+                  >
+                    🟡 NEUTRAL
+                  </button>
                 </div>
               </div>
               <div className="max-h-[600px] overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-                {result.tweets.map((tweet) => {
+                {filteredTweets.map((tweet) => {
                   const isExpanded = expandedTweet === tweet.id;
                   return (
                     <div
@@ -496,9 +614,14 @@ export default function AreWeBack() {
                               {tweet.timestamp}
                             </span>
                           </div>
-                          <p className="text-gray-300 text-sm mb-3 leading-relaxed">
-                            {tweet.text}
-                          </p>
+                          <p 
+                            className="text-gray-300 text-sm mb-3 leading-relaxed"
+                            dangerouslySetInnerHTML={{ 
+                              __html: isExpanded 
+                                ? highlightKeywords(tweet.text, tweet.sentiment)
+                                : tweet.text 
+                            }}
+                          />
                           {isExpanded && tweet.reason && (
                             <div className="mt-3 pt-3 border-t border-gray-800">
                               <div className="text-xs text-gray-500 font-mono mb-1">
@@ -535,6 +658,11 @@ export default function AreWeBack() {
     </div>
   );
 }
+
+
+
+
+
 
 
 

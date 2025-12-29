@@ -174,4 +174,14 @@ body {
   background: rgba(0, 255, 255, 0.5);
 }
 
+/* Sentiment keyword highlighting */
+.sentiment-highlight {
+  background: rgba(0, 255, 255, 0.2);
+  color: #00ffff;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-weight: 600;
+  text-shadow: 0 0 8px rgba(0, 255, 255, 0.6);
+}
+
 
