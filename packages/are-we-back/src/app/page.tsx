@@ -4,12 +4,14 @@ import { useState } from 'react';
 
 interface Tweet {
   id: string;
-  author: string;
-  timestamp: string;
+  authorHandle: string;
+  authorName: string;
   text: string;
+  timestamp: string;
   sentiment: 'positive' | 'negative' | 'neutral';
   sentimentLabel: string;
   reason?: string;
+  url: string;
 }
 
 interface SentimentResult {
@@ -23,12 +25,14 @@ interface SentimentResult {
   neutralCount: number;
 }
 
-// Generate random crypto Twitter handles
-function generateHandle(): string {
+// Generate random crypto Twitter handles and names
+function generateHandle(): { handle: string; name: string } {
   const prefixes = ['crypto', 'degen', 'moon', 'diamond', 'whale', 'ape', 'bull', 'bear', 'hodl', 'gm'];
   const suffixes = ['trader', 'maxi', 'bro', 'chad', 'anon', 'degen', 'lord', 'king', 'god', 'wizard'];
   const numbers = Math.random() > 0.5 ? Math.floor(Math.random() * 9999) : '';
-  return `@${prefixes[Math.floor(Math.random() * prefixes.length)]}${suffixes[Math.floor(Math.random() * suffixes.length)]}${numbers}`;
+  const handle = `${prefixes[Math.floor(Math.random() * prefixes.length)]}${suffixes[Math.floor(Math.random() * suffixes.length)]}${numbers}`;
+  const name = `${prefixes[Math.floor(Math.random() * prefixes.length)]} ${suffixes[Math.floor(Math.random() * suffixes.length)]}`;
+  return { handle, name };
 }
 
 // Generate relative timestamp
@@ -176,42 +180,54 @@ function generateSyntheticTweets(keyword: string): Tweet[] {
   // Generate positive tweets
   for (let i = 0; i < positiveCount; i++) {
     const template = positiveTemplates[Math.floor(Math.random() * positiveTemplates.length)];
+    const { handle, name } = generateHandle();
+    const tweetId = `${Date.now()}${Math.floor(Math.random() * 1000000)}`;
     tweets.push({
-      id: `tweet-${Date.now()}-${i}`,
-      author: generateHandle(),
+      id: tweetId,
+      authorHandle: `@${handle}`,
+      authorName: name,
       timestamp: generateTimestamp(),
       text: template,
       sentiment: 'positive',
       sentimentLabel: '🟢 Bullish',
       reason: sentimentReasons.positive[Math.floor(Math.random() * sentimentReasons.positive.length)],
+      url: `https://x.com/${handle}/status/${tweetId}`,
     });
   }
   
   // Generate negative tweets
   for (let i = 0; i < negativeCount; i++) {
     const template = negativeTemplates[Math.floor(Math.random() * negativeTemplates.length)];
+    const { handle, name } = generateHandle();
+    const tweetId = `${Date.now()}${Math.floor(Math.random() * 1000000)}`;
     tweets.push({
-      id: `tweet-${Date.now()}-${i + positiveCount}`,
-      author: generateHandle(),
+      id: tweetId,
+      authorHandle: `@${handle}`,
+      authorName: name,
       timestamp: generateTimestamp(),
       text: template,
       sentiment: 'negative',
       sentimentLabel: '🔴 Bearish',
       reason: sentimentReasons.negative[Math.floor(Math.random() * sentimentReasons.negative.length)],
+      url: `https://x.com/${handle}/status/${tweetId}`,
     });
   }
   
   // Generate neutral tweets
   for (let i = 0; i < neutralCount; i++) {
     const template = neutralTemplates[Math.floor(Math.random() * neutralTemplates.length)];
+    const { handle, name } = generateHandle();
+    const tweetId = `${Date.now()}${Math.floor(Math.random() * 1000000)}`;
     tweets.push({
-      id: `tweet-${Date.now()}-${i + positiveCount + negativeCount}`,
-      author: generateHandle(),
+      id: tweetId,
+      authorHandle: `@${handle}`,
+      authorName: name,
       timestamp: generateTimestamp(),
       text: template,
       sentiment: 'neutral',
       sentimentLabel: '🟡 Neutral',
       reason: sentimentReasons.neutral[Math.floor(Math.random() * sentimentReasons.neutral.length)],
+      url: `https://x.com/${handle}/status/${tweetId}`,
     });
   }
   
@@ -542,9 +558,14 @@ export default function AreWeBack() {
             {/* Tweet feed */}
             <div className="space-y-3">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-cyan-400 font-mono">
-                  ANALYZED TWEETS ({filteredTweets.length})
-                </h3>
+                <div>
+                  <h3 className="text-xl font-bold text-cyan-400 font-mono">
+                    ANALYZED TWEETS ({filteredTweets.length})
+                  </h3>
+                  <p className="text-xs text-gray-500 font-mono mt-1">
+                    ⚠️ Simulated Tweets (Demo Mode) - Live API integration required for real tweets
+                  </p>
+                </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setSentimentFilter('all')}
@@ -594,20 +615,25 @@ export default function AreWeBack() {
                   return (
                     <div
                       key={tweet.id}
-                      onClick={() => setExpandedTweet(isExpanded ? null : tweet.id)}
-                      className={`bg-black/30 border rounded-lg p-4 hover:border-cyan-500/50 transition-all cursor-pointer ${
+                      className={`bg-black/30 border rounded-lg p-4 transition-all group relative ${
                         tweet.sentiment === 'positive'
-                          ? 'border-green-500/20 hover:bg-green-500/5'
+                          ? 'border-green-500/20 hover:border-green-500/50 hover:bg-green-500/5'
                           : tweet.sentiment === 'negative'
-                          ? 'border-red-500/20 hover:bg-red-500/5'
-                          : 'border-yellow-500/20 hover:bg-yellow-500/5'
+                          ? 'border-red-500/20 hover:border-red-500/50 hover:bg-red-500/5'
+                          : 'border-yellow-500/20 hover:border-yellow-500/50 hover:bg-yellow-500/5'
                       }`}
                     >
                       <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
+                        <div 
+                          className="flex-1 min-w-0 cursor-pointer"
+                          onClick={() => setExpandedTweet(isExpanded ? null : tweet.id)}
+                        >
                           <div className="flex items-center gap-2 mb-2">
                             <span className="text-cyan-400 font-mono text-sm font-bold">
-                              {tweet.author}
+                              {tweet.authorHandle}
+                            </span>
+                            <span className="text-gray-500 text-xs font-mono">
+                              {tweet.authorName}
                             </span>
                             <span className="text-gray-600 text-xs">•</span>
                             <span className="text-gray-500 text-xs font-mono">
@@ -633,7 +659,7 @@ export default function AreWeBack() {
                             </div>
                           )}
                         </div>
-                        <div className="flex-shrink-0">
+                        <div className="flex-shrink-0 flex items-start gap-2">
                           <span
                             className={`text-xs font-bold font-mono px-2 py-1 rounded ${
                               tweet.sentiment === 'positive'
@@ -645,6 +671,19 @@ export default function AreWeBack() {
                           >
                             {tweet.sentimentLabel}
                           </span>
+                          <div className="relative group/tooltip">
+                            <button
+                              className="text-gray-600 hover:text-gray-400 transition-colors opacity-0 group-hover:opacity-100"
+                              title="External link disabled in demo mode"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                            </button>
+                            <div className="absolute right-0 top-full mt-1 w-48 bg-gray-900 border border-gray-700 rounded p-2 text-xs text-gray-400 opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-10">
+                              Live tweet linking requires API access
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -658,6 +697,7 @@ export default function AreWeBack() {
     </div>
   );
 }
+
 
 
 
