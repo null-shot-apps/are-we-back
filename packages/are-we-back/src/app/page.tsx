@@ -9,72 +9,146 @@ interface SentimentResult {
   tweets: Array<{ text: string; sentiment: string }>;
 }
 
-// Mock tweet data for realistic sentiment analysis
-const mockTweetData: Record<string, Array<{ text: string; sentiment: string }>> = {
-  ethereum: [
-    { text: "ETH looking strong above $3.5k. Merge narrative heating up again 🔥", sentiment: "bullish" },
-    { text: "Ethereum gas fees are insane rn. This is not sustainable", sentiment: "bearish" },
-    { text: "Just stacked more ETH. Long term holder mentality 💎🙌", sentiment: "bullish" },
-    { text: "ETH/BTC ratio still bleeding. Not looking good", sentiment: "bearish" },
-    { text: "Vitalik just dropped another banger post. Bullish on the tech", sentiment: "bullish" },
-    { text: "Layer 2s are eating ETH's lunch. Concerned about value accrual", sentiment: "bearish" },
-    { text: "ETH staking yields looking juicy. Passive income szn", sentiment: "bullish" },
-    { text: "Sold my ETH stack. Moving to other chains with better UX", sentiment: "bearish" },
-    { text: "Ethereum is still the king of DeFi. Nothing comes close", sentiment: "bullish" },
-    { text: "Price action is mid but fundamentals are stronger than ever", sentiment: "neutral" },
-  ],
-  bitcoin: [
-    { text: "BTC breaking $100k is inevitable. Just a matter of time ⏰", sentiment: "bullish" },
-    { text: "Bitcoin dominance rising. Alt season is dead", sentiment: "neutral" },
-    { text: "Institutions are accumulating. We're so early 🚀", sentiment: "bullish" },
-    { text: "BTC looking weak. Might see $80k again", sentiment: "bearish" },
-    { text: "Halving cycle playing out perfectly. History repeats", sentiment: "bullish" },
-    { text: "Sold all my BTC. This rally feels fake", sentiment: "bearish" },
-    { text: "Bitcoin is digital gold. Nothing else matters", sentiment: "bullish" },
-    { text: "Macro environment is terrible. Risk off mode activated", sentiment: "bearish" },
-    { text: "Just DCA'd more BTC. Long term vision unchanged", sentiment: "bullish" },
-    { text: "Sideways chop continues. Boring price action", sentiment: "neutral" },
-  ],
-  solana: [
-    { text: "SOL to $500 is not a meme. Ecosystem is thriving 🔥", sentiment: "bullish" },
-    { text: "Another Solana outage. When will this end?", sentiment: "bearish" },
-    { text: "Solana DeFi TVL hitting new ATHs. Bullish", sentiment: "bullish" },
-    { text: "Network went down again. This is embarrassing", sentiment: "bearish" },
-    { text: "SOL memecoins are printing. Best chain for degens", sentiment: "bullish" },
-    { text: "Sold my SOL bags. Too much centralization risk", sentiment: "bearish" },
-    { text: "Solana speed is unmatched. ETH feels slow now", sentiment: "bullish" },
-    { text: "FTX dumping more SOL. Price is cooked", sentiment: "bearish" },
-    { text: "Solana Mobile sold out instantly. Demand is crazy", sentiment: "bullish" },
-    { text: "Price action is choppy but fundamentals improving", sentiment: "neutral" },
-  ],
-};
+// Generate dynamic synthetic tweets that reference the keyword
+function generateSyntheticTweets(keyword: string): Array<{ text: string; sentiment: 'positive' | 'negative' | 'neutral' }> {
+  const tweets = [];
+  
+  // Positive sentiment templates
+  const positiveTemplates = [
+    `${keyword} looking strong! Breaking resistance levels 🚀`,
+    `Just bought more ${keyword}. Long term holder mentality 💎🙌`,
+    `${keyword} fundamentals are stronger than ever. Bullish`,
+    `${keyword} to the moon! This is just the beginning 🔥`,
+    `Accumulating ${keyword} at these levels. Thank me later`,
+    `${keyword} chart looking beautiful. Breakout incoming`,
+    `${keyword} ecosystem is thriving. So much development`,
+    `${keyword} holders are going to make it. Diamond hands`,
+    `${keyword} price action is insane. New ATH soon`,
+    `Institutions are buying ${keyword}. We're so early`,
+    `${keyword} is the future. Nothing else comes close`,
+    `${keyword} community is the strongest in crypto`,
+    `${keyword} adoption is accelerating. Bullish AF`,
+    `${keyword} technology is revolutionary. Game changer`,
+    `${keyword} staking rewards looking juicy. Passive income`,
+    `${keyword} partnerships keep coming. Massive growth ahead`,
+    `${keyword} tokenomics are perfect. Supply shock incoming`,
+    `${keyword} developers are building like crazy. Bullish`,
+    `${keyword} narrative is heating up again. FOMO incoming`,
+    `${keyword} is undervalued at current prices. Easy 10x`,
+  ];
+  
+  // Negative sentiment templates
+  const negativeTemplates = [
+    `${keyword} looking weak. Might dump further`,
+    `Sold my ${keyword} bags. Moving to better projects`,
+    `${keyword} is cooked. Price action is terrible`,
+    `${keyword} fundamentals are concerning. Not looking good`,
+    `${keyword} is dead. Time to move on`,
+    `${keyword} chart is brutal. Support levels breaking`,
+    `${keyword} ecosystem is dying. No development`,
+    `${keyword} holders are getting rekt. Cut your losses`,
+    `${keyword} price keeps dumping. No bottom in sight`,
+    `Institutions are dumping ${keyword}. Red flags everywhere`,
+    `${keyword} is outdated. Better alternatives exist`,
+    `${keyword} community is toxic. Staying away`,
+    `${keyword} adoption is failing. Bearish outlook`,
+    `${keyword} technology has major flaws. Concerning`,
+    `${keyword} yields are trash. Not worth it`,
+    `${keyword} partnerships are vaporware. All hype`,
+    `${keyword} tokenomics are terrible. Inflation is crazy`,
+    `${keyword} developers are leaving. Project is dying`,
+    `${keyword} narrative is dead. Nobody cares anymore`,
+    `${keyword} is overvalued. Easy short opportunity`,
+  ];
+  
+  // Neutral sentiment templates
+  const neutralTemplates = [
+    `${keyword} price action is sideways. Waiting for direction`,
+    `${keyword} consolidating here. Could go either way`,
+    `${keyword} market is uncertain. Mixed signals`,
+    `${keyword} trading in a range. Boring price action`,
+    `${keyword} fundamentals unchanged. Waiting for catalyst`,
+    `${keyword} chart is choppy. No clear trend`,
+    `${keyword} ecosystem has pros and cons. Neutral stance`,
+    `${keyword} holders are patient. Long term game`,
+    `${keyword} price is stable. Low volatility period`,
+    `${keyword} market sentiment is mixed. Bulls vs bears`,
+    `${keyword} is consolidating gains. Healthy correction`,
+    `${keyword} community is divided. Different opinions`,
+    `${keyword} adoption is steady. Gradual progress`,
+    `${keyword} technology is evolving. Work in progress`,
+    `${keyword} yields are average. Nothing special`,
+    `${keyword} partnerships are developing. Time will tell`,
+    `${keyword} tokenomics are standard. Nothing unusual`,
+    `${keyword} development is ongoing. Steady pace`,
+    `${keyword} narrative is unclear. Waiting for clarity`,
+    `${keyword} valuation is fair. Priced in`,
+  ];
+  
+  // Randomly select tweets with varying sentiment distribution
+  // This creates natural variation in sentiment scores
+  const sentimentDistribution = Math.random();
+  
+  let positiveCount, negativeCount, neutralCount;
+  
+  if (sentimentDistribution < 0.33) {
+    // Bearish scenario
+    positiveCount = Math.floor(Math.random() * 20) + 10; // 10-30
+    negativeCount = Math.floor(Math.random() * 20) + 50; // 50-70
+    neutralCount = 100 - positiveCount - negativeCount;
+  } else if (sentimentDistribution < 0.66) {
+    // Neutral scenario
+    positiveCount = Math.floor(Math.random() * 20) + 30; // 30-50
+    negativeCount = Math.floor(Math.random() * 20) + 20; // 20-40
+    neutralCount = 100 - positiveCount - negativeCount;
+  } else {
+    // Bullish scenario
+    positiveCount = Math.floor(Math.random() * 20) + 50; // 50-70
+    negativeCount = Math.floor(Math.random() * 20) + 10; // 10-30
+    neutralCount = 100 - positiveCount - negativeCount;
+  }
+  
+  // Generate positive tweets
+  for (let i = 0; i < positiveCount; i++) {
+    const template = positiveTemplates[Math.floor(Math.random() * positiveTemplates.length)];
+    tweets.push({ text: template, sentiment: 'positive' as const });
+  }
+  
+  // Generate negative tweets
+  for (let i = 0; i < negativeCount; i++) {
+    const template = negativeTemplates[Math.floor(Math.random() * negativeTemplates.length)];
+    tweets.push({ text: template, sentiment: 'negative' as const });
+  }
+  
+  // Generate neutral tweets
+  for (let i = 0; i < neutralCount; i++) {
+    const template = neutralTemplates[Math.floor(Math.random() * neutralTemplates.length)];
+    tweets.push({ text: template, sentiment: 'neutral' as const });
+  }
+  
+  // Shuffle tweets
+  return tweets.sort(() => Math.random() - 0.5);
+}
 
 function analyzeSentiment(keyword: string): SentimentResult {
-  const normalizedKeyword = keyword.toLowerCase();
-  const tweets = mockTweetData[normalizedKeyword] || mockTweetData.ethereum;
+  // Generate 100 synthetic tweets dynamically
+  const tweets = generateSyntheticTweets(keyword);
   
-  // Calculate sentiment score
-  let bullishCount = 0;
-  let bearishCount = 0;
-  let neutralCount = 0;
-  
+  // Calculate sentiment score per tweet
+  let totalScore = 0;
   tweets.forEach(tweet => {
-    if (tweet.sentiment === 'bullish') bullishCount++;
-    else if (tweet.sentiment === 'bearish') bearishCount++;
-    else neutralCount++;
+    if (tweet.sentiment === 'positive') totalScore += 1;
+    else if (tweet.sentiment === 'negative') totalScore -= 1;
+    // neutral = 0
   });
   
-  const totalTweets = tweets.length;
-  const bullishPercent = (bullishCount / totalTweets) * 100;
-  const bearishPercent = (bearishCount / totalTweets) * 100;
+  // Convert to 0-100 scale using the formula
+  const sentimentScore = Math.round(((totalScore / tweets.length) + 1) * 50);
   
-  // Score from 0-100
-  const score = Math.round(bullishPercent - bearishPercent + 50);
-  
-  // Determine label
+  // Determine label based on score
   let label = 'NEUTRAL';
-  if (score >= 70) label = 'BULLISH';
-  else if (score <= 30) label = 'BEARISH';
+  if (sentimentScore >= 70) label = 'BULLISH';
+  else if (sentimentScore <= 30) label = 'BEARISH';
   
   // Generate summary
   const summaries = {
@@ -84,10 +158,10 @@ function analyzeSentiment(keyword: string): SentimentResult {
   };
   
   return {
-    score: Math.max(0, Math.min(100, score)),
+    score: sentimentScore,
     label,
     summary: summaries[label as keyof typeof summaries],
-    tweets: tweets.slice(0, 5),
+    tweets: tweets.slice(0, 5).map(t => ({ text: t.text, sentiment: t.sentiment })),
   };
 }
 
@@ -295,4 +369,5 @@ export default function AreWeBack() {
     </div>
   );
 }
+
 
